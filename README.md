@@ -1,7 +1,7 @@
 # Restaurante API React Native
 
 Esta é uma API RESTful para gerenciar restaurantes e alimentos, desenvolvida com Node.js e SQLite. Ela oferece endpoints para listar, adicionar e deletar restaurantes e alimentos, e inclui documentação interativa usando Swagger.
-
+https://api-food-8mof.onrender.com/api-docs/
 ## Tabelas
 
 A API é composta por duas tabelas principais:
@@ -130,7 +130,7 @@ Execute o servidor:
     npm start
 ```
 
-### Acesse a documentação Swagger em http://localhost:3000/api-docs.
+### Acesse a documentação Swagger em http://localhost:3000/api-docs ou usar a https://api-food-8mof.onrender.com/api-docs/
 
 Contribuição
 
