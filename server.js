@@ -1,20 +1,43 @@
-const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
-const bodyParser = require('body-parser');
-const path = require('path');
-const { swaggerUi, swaggerSpec } = require('./swagger');
-const cors = require('cors'); // Importar o pacote CORS
+import express from 'express';
+import sqlite3 from 'sqlite3';
+import { json } from 'express';
+import { resolve, join } from 'path';
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+import cors from 'cors'; // Importar o pacote CORS
+
+// Configuração do Swagger
+const options = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'API de Restaurantes e Alimentos',
+      version: '1.0.0',
+      description: 'Documentação da API para gerenciar restaurantes e alimentos',
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000',
+      },
+    ],
+  },
+  apis: [join(process.cwd(), 'server.js')], // Caminho para o arquivo de configuração do servidor
+};
+
+const swaggerSpec = swaggerJsdoc(options);
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-// Configurar o middleware CORS
-app.use(cors()); // Liberar o CORS para todas as origens
+// Middleware
+app.use(cors()); // Permitir CORS
+app.use(json()); // Parse JSON bodies
 
-app.use(bodyParser.json());
+// Configurar Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Caminho para o arquivo do banco de dados
-const dbPath = path.resolve(__dirname, 'database.db');
+const dbPath = resolve(process.cwd(), 'database.db');
 
 // Cria e abre o banco de dados
 const db = new sqlite3.Database(dbPath);
@@ -80,9 +103,6 @@ const insertInitialData = () => {
 };
 
 insertInitialData();
-
-// Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Endpoints
 /**
@@ -259,6 +279,8 @@ app.post('/foods', (req, res) => {
   stmt.finalize();
 });
 
+
+// Deleta um restaurante pelo ID
 /**
  * @swagger
  * /restaurants/{id}:
@@ -268,25 +290,33 @@ app.post('/foods', (req, res) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: ID do restaurante a ser deletado
  *         schema:
  *           type: string
  *     responses:
- *       204:
- *         description: Restaurante deletado
+ *       200:
+ *         description: Restaurante deletado com sucesso
+ *       404:
+ *         description: Restaurante não encontrado
+ *       500:
+ *         description: Erro interno do servidor
  */
 app.delete('/restaurants/:id', (req, res) => {
   const { id } = req.params;
-  const stmt = db.prepare('DELETE FROM restaurants WHERE id = ?');
-  stmt.run(id, function (err) {
+  db.run('DELETE FROM restaurants WHERE id = ?', id, function (err) {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    res.sendStatus(204);
+    if (this.changes === 0) {
+      res.status(404).json({ message: 'Restaurante não encontrado' });
+      return;
+    }
+    res.status(200).json({ message: 'Restaurante deletado com sucesso' });
   });
-  stmt.finalize();
 });
 
+// Deleta um alimento pelo ID
 /**
  * @swagger
  * /foods/{id}:
@@ -296,25 +326,34 @@ app.delete('/restaurants/:id', (req, res) => {
  *       - in: path
  *         name: id
  *         required: true
+ *         description: ID do alimento a ser deletado
  *         schema:
  *           type: string
  *     responses:
- *       204:
- *         description: Alimento deletado
+ *       200:
+ *         description: Alimento deletado com sucesso
+ *       404:
+ *         description: Alimento não encontrado
+ *       500:
+ *         description: Erro interno do servidor
  */
 app.delete('/foods/:id', (req, res) => {
   const { id } = req.params;
-  const stmt = db.prepare('DELETE FROM foods WHERE id = ?');
-  stmt.run(id, function (err) {
+  db.run('DELETE FROM foods WHERE id = ?', id, function (err) {
     if (err) {
       res.status(500).json({ error: err.message });
       return;
     }
-    res.sendStatus(204);
+    if (this.changes === 0) {
+      res.status(404).json({ message: 'Alimento não encontrado' });
+      return;
+    }
+    res.status(200).json({ message: 'Alimento deletado com sucesso' });
   });
-  stmt.finalize();
 });
 
+
+// Start the server
 app.listen(port, () => {
-  console.log(`Servidor rodando na porta ${port}`);
+  console.log(`Server is running on port ${port}`);
 });

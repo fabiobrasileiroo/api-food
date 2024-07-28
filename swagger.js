@@ -1,6 +1,11 @@
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
-const path = require('path');
+import swaggerJsdoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Obter o diretório atual
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const options = {
   definition: {
@@ -16,12 +21,12 @@ const options = {
       },
     ],
   },
-  apis: [path.join(__dirname, 'server.js')], // Caminho para o arquivo de configuração do servidor
+  apis: [join(__dirname, 'server.js')], // Caminho para o arquivo de configuração do servidor
 };
 
 const swaggerSpec = swaggerJsdoc(options);
 
-module.exports = {
+export default {
   swaggerUi,
   swaggerSpec,
 };
